@@ -1,70 +1,194 @@
-# Getting Started with Create React App
+ICD-TM2 API Integration Platform
+<div align="center">
+https://img.shields.io/badge/React-18.2.0-blue?style=for-the-badge&logo=react
+https://img.shields.io/badge/Firebase-Authentication-orange?style=for-the-badge&logo=firebase
+https://img.shields.io/badge/Framer-Motion-purple?style=for-the-badge
+https://img.shields.io/badge/Design-Responsive-green?style=for-the-badge
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern web application that bridges modern EHR systems with traditional medicine knowledge from Ayurveda, Siddha, and Unani systems.
 
-## Available Scripts
+Live Demo • Report Bug • Request Feature
 
-In the project directory, you can run:
+</div>
+https://via.placeholder.com/800x400/4CAF50/FFFFFF?text=ICD-TM2+Platform+Screenshot
 
-### `npm start`
+✨ Features
+🔍 Unified Search across multiple traditional medicine systems
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+🌙 Dark/Light Theme with smooth transitions
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+📱 Fully Responsive design for all devices
 
-### `npm test`
+⚡ Modern Animations powered by Framer Motion
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+🔐 Google Authentication with Firebase
 
-### `npm run build`
+🏥 Traditional Medicine Systems (Ayurveda, Siddha, Unani)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+📊 ICD Code Integration for standardized reference
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+🚀 Quick Start
+Prerequisites
+Node.js (v14 or higher)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+npm or yarn
 
-### `npm run eject`
+Firebase account
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Installation
+Clone the repository:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+bash
+git clone https://github.com/your-username/icd-tm2-platform.git
+cd icd-tm2-platform
+Install dependencies:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+bash
+npm install
+Set up Firebase:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Create a new Firebase project
 
-## Learn More
+Enable Google authentication
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Replace the Firebase config in App.js with your own
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Start the development server:
 
-### Code Splitting
+bash
+npm start
+Open http://localhost:3000 to view it in the browser.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+🏗️ Project Structure
+text
+src/
+├── components/          # Reusable components
+│   ├── Header.js       # Navigation header
+│   ├── HeroSection.js  # Hero section with animations
+│   ├── ValueProposition.js # Value proposition section
+│   └── Features.js     # Features showcase
+├── pages/              # Page components
+│   ├── LandingPage.js  # Home page
+│   ├── SearchPage.js   # Search functionality
+│   └── SystemPage.js   # Individual system pages
+├── App.js              # Main application component
+├── App.css             # Application styles
+└── index.js            # Application entry point
+🎨 Design System
+The application uses a custom design system with CSS variables for consistent theming:
 
-### Analyzing the Bundle Size
+css
+:root {
+  --primary-color: #4CAF50;
+  --secondary-color: #2196F3;
+  --accent-color: #FF9800;
+  --text-color: #333;
+  --bg-color: #f9f9f9;
+  --card-bg: #ffffff;
+  --header-bg: #ffffff;
+  --footer-bg: #2c3e50;
+  --footer-text: #ecf0f1;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+Dark mode variants are automatically applied when the theme is toggled.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+🔧 Technologies Used
+React - Frontend framework
 
-### Making a Progressive Web App
+React Router - Navigation
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Framer Motion - Animations
 
-### Advanced Configuration
+Firebase - Authentication
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+CSS3 - Styling with custom properties
 
-### Deployment
+GSAP - Additional animations
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+📱 Usage
+Searching for Treatments
+Navigate to the Search page
 
-### `npm run build` fails to minify
+Enter a symptom or condition (e.g., "fever", "diabetes")
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+View results from all traditional medicine systems
+
+Filter by specific system if needed
+
+Exploring Traditional Systems
+Ayurveda: Ancient Indian system of natural healing
+
+Siddha: Traditional Tamil system of medicine
+
+Unani: Greco-Arabic system of medicine
+
+Each system page provides detailed information about the tradition and its treatments.
+
+🎭 Animation System
+The application uses a sophisticated animation system with:
+
+Page transitions with fade and slide effects
+
+Staggered animations for lists and grids
+
+Hover effects on interactive elements
+
+Scroll-triggered animations for content sections
+
+Loading states with spinners and transitions
+
+🌙 Dark Mode
+The application features a complete dark mode implementation that:
+
+Toggles with a smooth animation
+
+Preserves user preference
+
+Adjusts all UI elements appropriately
+
+Maintains readability and contrast
+
+🔌 API Integration
+The platform is designed to integrate with the ICD-TM2 API, providing:
+
+Standardized ICD codes for traditional medicine
+
+Cross-system search capabilities
+
+Structured response formats
+
+🤝 Contributing
+We welcome contributions to the ICD-TM2 platform! Please follow these steps:
+
+Fork the project
+
+Create a feature branch (git checkout -b feature/amazing-feature)
+
+Commit your changes (git commit -m 'Add some amazing feature')
+
+Push to the branch (git push origin feature/amazing-feature)
+
+Open a Pull Request
+
+📄 License
+This project is licensed under the MIT License - see the LICENSE.md file for details.
+
+📞 Contact
+For questions or support, please contact:
+
+Email: info@icd-tm2.org
+
+Phone: +91 9876543210
+
+🙏 Acknowledgments
+Ministry of AYUSH, Government of India
+
+World Health Organization for ICD standards
+
+Traditional medicine practitioners and researchers
+
+<div align="center">
+Made with ❤️ for the future of integrative healthcare
+
+</div>
