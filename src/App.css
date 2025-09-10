@@ -555,6 +555,7 @@ body {
   align-items: center;
   gap: 2rem;
   margin-bottom: 3rem;
+ 
 }
 
 .system-icon-large {
@@ -562,12 +563,12 @@ body {
 }
 
 .system-info h2 {
-  color: var(--primary-color);
+ color: #0d1b2a;
   margin-bottom: 0.5rem;
 }
 
 .system-info p {
-  color: var(--text-color);
+  color: #0d1b2a;
 }
 
 .system-info-content {
@@ -582,7 +583,7 @@ body {
 .system-info-content p {
   margin-bottom: 1.5rem;
   line-height: 1.8;
-  color: var(--text-color);
+   color: #0d1b2a;
 }
 
 .system-benefits h4 {
@@ -597,7 +598,7 @@ body {
 
 .system-benefits li {
   margin-bottom: 0.5rem;
-  color: var(--text-color);
+  color: #0d1b2a;
 }
 
 /* Footer */
