@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,37 +20,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Mock data for demonstration
-const mockData = {
-  fever: {
-    ayurveda: [
-      { name: "Tulsi Tea", description: "Basil leaves boiled in water", icdCode: "ICD-A-101" },
-      { name: "Ginger Honey", description: "Fresh ginger with honey", icdCode: "ICD-A-102" }
-    ],
-    siddha: [
-      { name: "Nilavembu Kudineer", description: "Herbal decoction", icdCode: "ICD-S-201" },
-      { name: "Adathodai Manapagu", description: "Herbal syrup", icdCode: "ICD-S-202" }
-    ],
-    unani: [
-      { name: "Habb-e-Jadwar", description: "Herbal tablets", icdCode: "ICD-U-301" },
-      { name: "Sharbat-e-Banafsha", description: "Violet syrup", icdCode: "ICD-U-302" }
-    ]
-  },
-  diabetes: {
-    ayurveda: [
-      { name: "Bitter Gourd Juice", description: "Fresh karela juice", icdCode: "ICD-A-501" },
-      { name: "Fenugreek Seeds", description: "Methi seeds soaked overnight", icdCode: "ICD-A-502" }
-    ],
-    siddha: [
-      { name: "Avarai Kudineer", description: "Herbal decoction", icdCode: "ICD-S-601" },
-      { name: "Nellikai Legiyam", description: "Gooseberry preparation", icdCode: "ICD-S-602" }
-    ],
-    unani: [
-      { name: "Qurs-e-Gurmar", description: "Gymnema tablets", icdCode: "ICD-U-701" },
-      { name: "Sharbat-e-Ajazeen", description: "Linseed syrup", icdCode: "ICD-U-702" }
-    ]
-  }
-};
+// API base URL
+const API_BASE_URL = "http://localhost:8000";
 
 // Animation variants
 const fadeIn = {
@@ -154,7 +125,7 @@ const HeroSection = () => {
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          Bridging Modern EHR Systems with Traditional Medicine Knowledge (Ayurveda, Siddha, Unani)
+          Bridging Modern EHR Systems with Traditional Medicine Knowledge (Ayurveda, Siddha, Unani, ICD11)
         </motion.p>
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -188,7 +159,7 @@ const HeroSection = () => {
             className="flow-item"
             whileHover={{ scale: 1.1, backgroundColor: "var(--primary-color)", color: "white" }}
           >
-            EHR
+            FEHR
           </motion.div>
           <div className="flow-arrow">→</div>
           <motion.div 
@@ -226,6 +197,13 @@ const HeroSection = () => {
               transition={{ repeat: Infinity, duration: 4, delay: 2 }}
             >
               🌱
+            </motion.span>
+            <motion.span 
+              className="medicine-icon"
+              animate={{ rotate: [0, -10, 10, 0] }}
+              transition={{ repeat: Infinity, duration: 4, delay: 3 }}
+            >
+              🏥
             </motion.span>
           </div>
         </motion.div>
@@ -352,6 +330,21 @@ const LandingPage = () => {
   );
 };
 
+// API fetch utility function
+const fetchData = async (url) => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null;
+  }
+};
+
 // Search Page Component
 const SearchPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -359,19 +352,28 @@ const SearchPage = () => {
   const [activeSystem, setActiveSystem] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
+    if (!searchTerm.trim()) return;
+    
     setIsSearching(true);
     
-    // Simulate API call delay
-    setTimeout(() => {
-      if (searchTerm.toLowerCase() in mockData) {
-        setResults(mockData[searchTerm.toLowerCase()]);
+    try {
+      // Call the common endpoint
+      const data = await fetchData(`${API_BASE_URL}/terminologies/search/?q=${searchTerm}`);
+      
+      if (data && data.results) {
+        setResults(data.results);
+        console.log("API Response:", data);
       } else {
-        setResults({});
+        setResults([]);
       }
+    } catch (error) {
+      console.error("Search error:", error);
+      setResults([]);
+    } finally {
       setIsSearching(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -403,6 +405,7 @@ const SearchPage = () => {
             className="search-button"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            disabled={isSearching}
           >
             {isSearching ? (
               <div className="loading-spinner"></div>
@@ -413,7 +416,7 @@ const SearchPage = () => {
         </motion.form>
 
         <AnimatePresence>
-          {results && Object.keys(results).length === 0 && (
+          {results && results.length === 0 && (
             <motion.div 
               className="no-results"
               initial={{ opacity: 0, height: 0 }}
@@ -426,7 +429,7 @@ const SearchPage = () => {
         </AnimatePresence>
 
         <AnimatePresence>
-          {results && Object.keys(results).length > 0 && (
+          {results && results.length > 0 && (
             <motion.div 
               className="search-results"
               initial={{ opacity: 0, y: 20 }}
@@ -435,9 +438,8 @@ const SearchPage = () => {
             >
               <h3>Results for "{searchTerm}"</h3>
               <div className="unified-results">
-                <h4>Unified Results</h4>
                 <motion.div className="results-grid">
-                  {results.ayurveda && results.ayurveda.map((item, index) => (
+                  {results.map((item, index) => (
                     <motion.div 
                       key={index} 
                       className="result-card"
@@ -446,37 +448,15 @@ const SearchPage = () => {
                       transition={{ duration: 0.4, delay: index * 0.1 }}
                       whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                     >
-                      <h5>{item.name}</h5>
-                      <p>{item.description}</p>
-                      <span className="icd-code">{item.icdCode}</span>
-                    </motion.div>
-                  ))}
-                  {results.siddha && results.siddha.map((item, index) => (
-                    <motion.div 
-                      key={index} 
-                      className="result-card"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.4, delay: (index + results.ayurveda.length) * 0.1 }}
-                      whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
-                    >
-                      <h5>{item.name}</h5>
-                      <p>{item.description}</p>
-                      <span className="icd-code">{item.icdCode}</span>
-                    </motion.div>
-                  ))}
-                  {results.unani && results.unani.map((item, index) => (
-                    <motion.div 
-                      key={index} 
-                      className="result-card"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.4, delay: (index + results.ayurveda.length + results.siddha.length) * 0.1 }}
-                      whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
-                    >
-                      <h5>{item.name}</h5>
-                      <p>{item.description}</p>
-                      <span className="icd-code">{item.icdCode}</span>
+                      <Link 
+                        to="/details" 
+                        state={{ item }}
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                      >
+                        <h5>{item.english_name || item.display_name}</h5>
+                        <p>{item.description || 'No description available'}</p>
+                        <span className="icd-code">{item.code || 'No code'}</span>
+                      </Link>
                     </motion.div>
                   ))}
                 </motion.div>
@@ -492,7 +472,7 @@ const SearchPage = () => {
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <h3>Explore by Traditional System</h3>
+          <h3>Explore by Medical System</h3>
           <div className="cards-container">
             <motion.div
               whileHover={{ y: -10, scale: 1.02 }}
@@ -524,6 +504,16 @@ const SearchPage = () => {
                 <p>Greco-Arabic system of medicine</p>
               </Link>
             </motion.div>
+            <motion.div
+              whileHover={{ y: -10, scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Link to="/icd11" className="system-card">
+                <div className="system-icon">🏥</div>
+                <h4>ICD-11</h4>
+                <p>International Classification of Diseases</p>
+              </Link>
+            </motion.div>
           </div>
         </motion.div>
       </div>
@@ -542,37 +532,51 @@ const SystemPage = ({ systemName }) => {
       title: "Ayurveda",
       description: "Ancient Indian system of natural and holistic healing",
       image: "🌿",
-      treatments: mockData
+      endpoint: `${API_BASE_URL}/terminologies/ayurveda/search/?q=`
     },
     siddha: {
       title: "Siddha",
       description: "One of the oldest traditional medicine systems from South India",
       image: "🍃",
-      treatments: mockData
+      endpoint: `${API_BASE_URL}/terminologies/siddha/search/?q=`
     },
     unani: {
       title: "Unani",
       description: "Greco-Arabic system of medicine based on the teachings of Hippocrates",
       image: "🌱",
-      treatments: mockData
+      endpoint: `${API_BASE_URL}/terminologies/unani/search/?q=`
+    },
+    icd11: {
+      title: "ICD-11",
+      description: "International Classification of Diseases 11th Revision",
+      image: "🏥",
+      endpoint: `${API_BASE_URL}/terminologies/icd11/search/?q=`
     }
   };
 
   const system = systemData[systemName];
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
+    if (!searchTerm.trim()) return;
+    
     setIsSearching(true);
     
-    // Simulate API call delay
-    setTimeout(() => {
-      if (searchTerm.toLowerCase() in mockData && systemName in mockData[searchTerm.toLowerCase()]) {
-        setResults(mockData[searchTerm.toLowerCase()][systemName]);
+    try {
+      const data = await fetchData(`${system.endpoint}${searchTerm}`);
+      
+      if (data && data.results) {
+        setResults(data.results);
+        console.log(`${system.title} API Response:`, data);
       } else {
         setResults([]);
       }
+    } catch (error) {
+      console.error(`${system.title} search error:`, error);
+      setResults([]);
+    } finally {
       setIsSearching(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -616,6 +620,7 @@ const SystemPage = ({ systemName }) => {
             className="search-button"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            disabled={isSearching}
           >
             {isSearching ? (
               <div className="loading-spinner"></div>
@@ -660,9 +665,15 @@ const SystemPage = ({ systemName }) => {
                     variants={fadeIn}
                     whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                   >
-                    <h5>{item.name}</h5>
-                    <p>{item.description}</p>
-                    <span className="icd-code">{item.icdCode}</span>
+                    <Link 
+                      to="/details" 
+                      state={{ item, system: system.title }}
+                      style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                      <h5>{item.english_name || item.display_name || item.title}</h5>
+                      <p>{item.description || 'No description available'}</p>
+                      <span className="icd-code">{item.code || 'No code'}</span>
+                    </Link>
                   </motion.div>
                 ))}
               </motion.div>
@@ -679,17 +690,195 @@ const SystemPage = ({ systemName }) => {
         >
           <h3>About {system.title}</h3>
           <p>
-            {system.title} is a traditional system of medicine with historical roots in the Indian subcontinent. 
-            The system integrates natural elements and holistic approaches to prevent and treat health conditions.
+            {system.title} is a {system.title === 'ICD-11' ? 'modern international standard' : 'traditional system of medicine'} with {
+              system.title === 'ICD-11' 
+                ? 'global recognition for disease classification and health reporting.' 
+                : 'historical roots in the Indian subcontinent. The system integrates natural elements and holistic approaches to prevent and treat health conditions.'
+            }
           </p>
           <div className="system-benefits">
             <h4>Key Benefits</h4>
             <ul>
-              <li>Holistic approach to wellness</li>
-              <li>Natural and minimal side effects</li>
-              <li>Personalized treatments based on individual constitution</li>
-              <li>Focus on prevention and health maintenance</li>
+              {system.title === 'ICD-11' ? (
+                <>
+                  <li>Global standard for health reporting</li>
+                  <li>Comprehensive disease classification</li>
+                  <li>Digital-ready structure</li>
+                  <li>Integration with traditional medicine systems</li>
+                </>
+              ) : (
+                <>
+                  <li>Holistic approach to wellness</li>
+                  <li>Natural and minimal side effects</li>
+                  <li>Personalized treatments based on individual constitution</li>
+                  <li>Focus on prevention and health maintenance</li>
+                </>
+              )}
             </ul>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+// Details Page Component
+const DetailsPage = () => {
+  const location = useLocation();
+  const { item, system } = location.state || {};
+  
+  if (!item) {
+    return (
+      <div className="details-page">
+        <div className="container">
+          <div className="error-message">
+            <h2>No Item Details Available</h2>
+            <p>Please go back and select an item to view details.</p>
+            <Link to="/search" className="back-button">Back to Search</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="details-page">
+      <div className="container">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Link to={-1} className="back-button">← Back</Link>
+          
+          <div className="details-header">
+            <h2>{item.english_name || item.display_name || item.title}</h2>
+            {system && <span className="system-badge">{system}</span>}
+            {item.code && <span className="code-badge">{item.code}</span>}
+          </div>
+          
+          <div className="details-content">
+            <div className="details-card">
+              <h3>Basic Information</h3>
+              <div className="details-grid">
+                {item.code && (
+                  <div className="detail-item">
+                    <span className="detail-label">Code:</span>
+                    <span className="detail-value">{item.code}</span>
+                  </div>
+                )}
+                {item.english_name && (
+                  <div className="detail-item">
+                    <span className="detail-label">English Name:</span>
+                    <span className="detail-value">{item.english_name}</span>
+                  </div>
+                )}
+                {item.hindi_name && (
+                  <div className="detail-item">
+                    <span className="detail-label">Hindi Name:</span>
+                    <span className="detail-value">{item.hindi_name}</span>
+                  </div>
+                )}
+                {item.arabic_name && (
+                  <div className="detail-item">
+                    <span className="detail-label">Arabic Name:</span>
+                    <span className="detail-value">{item.arabic_name}</span>
+                  </div>
+                )}
+                {item.tamil_name && (
+                  <div className="detail-item">
+                    <span className="detail-label">Tamil Name:</span>
+                    <span className="detail-value">{item.tamil_name}</span>
+                  </div>
+                )}
+                {item.diacritical_name && (
+                  <div className="detail-item">
+                    <span className="detail-label">Diacritical Name:</span>
+                    <span className="detail-value">{item.diacritical_name}</span>
+                  </div>
+                )}
+                {item.romanized_name && (
+                  <div className="detail-item">
+                    <span className="detail-label">Romanized Name:</span>
+                    <span className="detail-value">{item.romanized_name}</span>
+                  </div>
+                )}
+                {item.display_name && (
+                  <div className="detail-item">
+                    <span className="detail-label">Display Name:</span>
+                    <span className="detail-value">{item.display_name}</span>
+                  </div>
+                )}
+                {item.title && (
+                  <div className="detail-item">
+                    <span className="detail-label">Title:</span>
+                    <span className="detail-value">{item.title}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {item.description && item.description !== '-' && (
+              <div className="details-card">
+                <h3>Description</h3>
+                <p>{item.description}</p>
+              </div>
+            )}
+            
+            {/* ICD-11 Specific Fields */}
+            {(item.foundation_uri || item.linearization_uri || item.chapter_no) && (
+              <div className="details-card">
+                <h3>ICD-11 Details</h3>
+                <div className="details-grid">
+                  {item.foundation_uri && (
+                    <div className="detail-item">
+                      <span className="detail-label">Foundation URI:</span>
+                      <span className="detail-value">
+                        <a href={item.foundation_uri} target="_blank" rel="noopener noreferrer">
+                          {item.foundation_uri}
+                        </a>
+                      </span>
+                    </div>
+                  )}
+                  {item.linearization_uri && (
+                    <div className="detail-item">
+                      <span className="detail-label">Linearization URI:</span>
+                      <span className="detail-value">
+                        <a href={item.linearization_uri} target="_blank" rel="noopener noreferrer">
+                          {item.linearization_uri}
+                        </a>
+                      </span>
+                    </div>
+                  )}
+                  {item.chapter_no && (
+                    <div className="detail-item">
+                      <span className="detail-label">Chapter Number:</span>
+                      <span className="detail-value">{item.chapter_no}</span>
+                    </div>
+                  )}
+                  {item.browser_link && (
+                    <div className="detail-item">
+                      <span className="detail-label">Browser Link:</span>
+                      <span className="detail-value">
+                        <a href={item.browser_link} target="_blank" rel="noopener noreferrer">
+                          {item.browser_link}
+                        </a>
+                      </span>
+                    </div>
+                  )}
+                  {item.icat_link && (
+                    <div className="detail-item">
+                      <span className="detail-label">ICAT Link:</span>
+                      <span className="detail-value">
+                        <a href={item.icat_link} target="_blank" rel="noopener noreferrer">
+                          {item.icat_link}
+                        </a>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>
@@ -721,6 +910,7 @@ const Footer = () => {
               <li><Link to="/ayurveda">Ayurveda</Link></li>
               <li><Link to="/siddha">Siddha</Link></li>
               <li><Link to="/unani">Unani</Link></li>
+              <li><Link to="/icd11">ICD-11</Link></li>
             </ul>
           </div>
           <div className="footer-section">
@@ -790,6 +980,8 @@ function App() {
             <Route path="/ayurveda" element={<SystemPage systemName="ayurveda" />} />
             <Route path="/siddha" element={<SystemPage systemName="siddha" />} />
             <Route path="/unani" element={<SystemPage systemName="unani" />} />
+            <Route path="/icd11" element={<SystemPage systemName="icd11" />} />
+            <Route path="/details" element={<DetailsPage />} />
           </Routes>
         </main>
         <Footer />
