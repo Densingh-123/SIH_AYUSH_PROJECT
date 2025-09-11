@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import './App.css';
-
 // Initialize Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyA9mf3ra24HBI4gw5O2DF1Gr788hiiQ1Ws",
@@ -345,11 +344,75 @@ const fetchData = async (url) => {
   }
 };
 
+// System-specific card component
+const SystemCard = ({ item, system }) => {
+  return (
+    <motion.div 
+      className="result-card"
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4 }}
+      whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+    >
+      <Link 
+        to="/details" 
+        state={{ item, system }}
+        style={{ textDecoration: 'none', color: 'inherit' }}
+      >
+        <div className="card-header">
+          <h5>{item.english_name || item.display_name || item.title}</h5>
+          <span className="icd-code">{item.code || 'No code'}</span>
+        </div>
+        
+        <div className="card-content">
+          {system === 'Ayurveda' && (
+            <>
+              {item.hindi_name && <p><strong>Hindi:</strong> {item.hindi_name}</p>}
+              {item.diacritical_name && <p><strong>Diacritical:</strong> {item.diacritical_name}</p>}
+            </>
+          )}
+          
+          {system === 'Siddha' && (
+            <>
+              {item.tamil_name && <p><strong>Tamil:</strong> {item.tamil_name}</p>}
+              {item.romanized_name && <p><strong>Romanized:</strong> {item.romanized_name}</p>}
+            </>
+          )}
+          
+          {system === 'Unani' && (
+            <>
+              {item.arabic_name && <p><strong>Arabic:</strong> {item.arabic_name}</p>}
+              {item.romanized_name && <p><strong>Romanized:</strong> {item.romanized_name}</p>}
+            </>
+          )}
+          
+          {system === 'ICD-11' && (
+            <>
+              {item.title && <p><strong>Title:</strong> {item.title}</p>}
+              {item.chapter_no && <p><strong>Chapter:</strong> {item.chapter_no}</p>}
+              {item.foundation_uri && (
+                <p className="uri-truncate"><strong>URI:</strong> {item.foundation_uri}</p>
+              )}
+              {item.is_leaf !== undefined && (
+                <div className="leaf-indicator">
+                  <span className="label">Is Leaf:</span>
+                  <span className={`status ${item.is_leaf ? 'active' : 'inactive'}`}>
+                    {item.is_leaf ? 'Yes' : 'No'}
+                  </span>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </Link>
+    </motion.div>
+  );
+};
+
 // Search Page Component
 const SearchPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState(null);
-  const [activeSystem, setActiveSystem] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
 
   const handleSearch = async (e) => {
@@ -440,24 +503,11 @@ const SearchPage = () => {
               <div className="unified-results">
                 <motion.div className="results-grid">
                   {results.map((item, index) => (
-                    <motion.div 
+                    <SystemCard 
                       key={index} 
-                      className="result-card"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.4, delay: index * 0.1 }}
-                      whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
-                    >
-                      <Link 
-                        to="/details" 
-                        state={{ item }}
-                        style={{ textDecoration: 'none', color: 'inherit' }}
-                      >
-                        <h5>{item.english_name || item.display_name}</h5>
-                        <p>{item.description || 'No description available'}</p>
-                        <span className="icd-code">{item.code || 'No code'}</span>
-                      </Link>
-                    </motion.div>
+                      item={item} 
+                      system="Common"
+                    />
                   ))}
                 </motion.div>
               </div>
@@ -659,22 +709,11 @@ const SystemPage = ({ systemName }) => {
                 animate="visible"
               >
                 {results.map((item, index) => (
-                  <motion.div 
+                  <SystemCard 
                     key={index} 
-                    className="result-card"
-                    variants={fadeIn}
-                    whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
-                  >
-                    <Link 
-                      to="/details" 
-                      state={{ item, system: system.title }}
-                      style={{ textDecoration: 'none', color: 'inherit' }}
-                    >
-                      <h5>{item.english_name || item.display_name || item.title}</h5>
-                      <p>{item.description || 'No description available'}</p>
-                      <span className="icd-code">{item.code || 'No code'}</span>
-                    </Link>
-                  </motion.div>
+                    item={item} 
+                    system={system.title}
+                  />
                 ))}
               </motion.div>
             </motion.div>
@@ -753,8 +792,10 @@ const DetailsPage = () => {
           
           <div className="details-header">
             <h2>{item.english_name || item.display_name || item.title}</h2>
-            {system && <span className="system-badge">{system}</span>}
-            {item.code && <span className="code-badge">{item.code}</span>}
+            <div className="badges">
+              {system && <span className="system-badge">{system}</span>}
+              {item.code && <span className="code-badge">{item.code}</span>}
+            </div>
           </div>
           
           <div className="details-content">
@@ -826,7 +867,7 @@ const DetailsPage = () => {
             )}
             
             {/* ICD-11 Specific Fields */}
-            {(item.foundation_uri || item.linearization_uri || item.chapter_no) && (
+            {(item.foundation_uri || item.linearization_uri || item.chapter_no || item.is_leaf !== undefined) && (
               <div className="details-card">
                 <h3>ICD-11 Details</h3>
                 <div className="details-grid">
@@ -873,6 +914,14 @@ const DetailsPage = () => {
                         <a href={item.icat_link} target="_blank" rel="noopener noreferrer">
                           {item.icat_link}
                         </a>
+                      </span>
+                    </div>
+                  )}
+                  {item.is_leaf !== undefined && (
+                    <div className="detail-item">
+                      <span className="detail-label">Is Leaf:</span>
+                      <span className={`detail-value status ${item.is_leaf ? 'active' : 'inactive'}`}>
+                        {item.is_leaf ? 'Yes' : 'No'}
                       </span>
                     </div>
                   )}
