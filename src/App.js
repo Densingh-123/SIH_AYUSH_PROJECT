@@ -1047,7 +1047,7 @@ const PatientForm = () => {
                   <label>Current Medications</label>
                   <textarea
                     name="currentMedications"
-                    value={formData.currentMedications}
+                    value{...formData.currentMedications}
                     onChange={handleInputChange}
                     placeholder="Medication name, dosage, frequency"
                     rows="3"
@@ -1437,7 +1437,7 @@ const DoctorDashboard = () => {
   );
 };
 
-// Hero Section Component (unchanged)
+// Hero Section Component
 const HeroSection = () => {
   const [ref, inView] = useInView({
     threshold: 0.1,
@@ -1546,7 +1546,7 @@ const HeroSection = () => {
   );
 };
 
-// Value Proposition Component (unchanged)
+// Value Proposition Component
 const ValueProposition = () => {
   const [ref, inView] = useInView({
     threshold: 0.1,
@@ -1593,7 +1593,7 @@ const ValueProposition = () => {
   );
 };
 
-// Features Component (unchanged)
+// Features Component
 const Features = () => {
   const [ref, inView] = useInView({
     threshold: 0.1,
@@ -1640,7 +1640,7 @@ const Features = () => {
   );
 };
 
-// Landing Page Component (unchanged)
+// Landing Page Component
 const LandingPage = () => {
   return (
     <div className="landing-page">
@@ -1664,7 +1664,7 @@ const LandingPage = () => {
   );
 };
 
-// API fetch utility function (unchanged)
+// API fetch utility function
 const fetchData = async (url) => {
   try {
     const response = await fetch(url);
@@ -1679,7 +1679,7 @@ const fetchData = async (url) => {
   }
 };
 
-// System-specific card component (unchanged)
+// System-specific card component
 const SystemCard = ({ item, system }) => {
   return (
     <motion.div 
@@ -1744,9 +1744,11 @@ const SystemCard = ({ item, system }) => {
   );
 };
 
-// Search Page Component (unchanged)
+// Search Page Component (updated for mappings)
 const SearchPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSystem, setSelectedSystem] = useState('ayurveda');
+  const [minConfidence, setMinConfidence] = useState(0.1);
   const [results, setResults] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -1757,18 +1759,20 @@ const SearchPage = () => {
     setIsSearching(true);
     
     try {
-      // Call the common endpoint
-      const data = await fetchData(`${API_BASE_URL}/terminologies/search/?q=${searchTerm}`);
+      // Call the mappings endpoint
+      const data = await fetchData(
+        `${API_BASE_URL}/terminologies/mappings/?system=${selectedSystem}&q=${searchTerm}&min_confidence=${minConfidence}`
+      );
       
       if (data && data.results) {
-        setResults(data.results);
+        setResults(data);
         console.log("API Response:", data);
       } else {
-        setResults([]);
+        setResults({ results: [] });
       }
     } catch (error) {
       console.error("Search error:", error);
-      setResults([]);
+      setResults({ results: [] });
     } finally {
       setIsSearching(false);
     }
@@ -1782,22 +1786,56 @@ const SearchPage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          Find Traditional Medicine Treatments
+          Find Traditional Medicine Mappings
         </motion.h2>
+        
         <motion.form 
           onSubmit={handleSearch} 
-          className="search-form"
+          className="search-form mapping-form"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <input
-            type="text"
-            placeholder="Search by symptom or condition (e.g., fever, diabetes)"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
+          <div className="form-row">
+            <div className="form-group">
+              <label>Search Term</label>
+              <input
+                type="text"
+                placeholder="Enter disease or condition (e.g., fever, diabetes)"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+                required
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>System</label>
+              <select
+                value={selectedSystem}
+                onChange={(e) => setSelectedSystem(e.target.value)}
+                className="system-select"
+              >
+                <option value="ayurveda">Ayurveda</option>
+                <option value="siddha">Siddha</option>
+                <option value="unani">Unani</option>
+              </select>
+            </div>
+            
+            <div className="form-group">
+              <label>Min Confidence</label>
+              <input
+                type="number"
+                step="0.1"
+                min="0.1"
+                max="1.0"
+                value={minConfidence}
+                onChange={(e) => setMinConfidence(parseFloat(e.target.value))}
+                className="confidence-input"
+              />
+            </div>
+          </div>
+          
           <motion.button 
             type="submit" 
             className="search-button"
@@ -1808,44 +1846,153 @@ const SearchPage = () => {
             {isSearching ? (
               <div className="loading-spinner"></div>
             ) : (
-              "Search"
+              "Search Mappings"
             )}
           </motion.button>
         </motion.form>
 
         <AnimatePresence>
-          {results && results.length === 0 && (
+          {results && results.results && results.results.length === 0 && (
             <motion.div 
               className="no-results"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
             >
-              <p>No results found for "{searchTerm}". Try searching for "fever" or "diabetes".</p>
+              <p>No mapping results found for "{searchTerm}". Try a different term.</p>
             </motion.div>
           )}
         </AnimatePresence>
 
         <AnimatePresence>
-          {results && results.length > 0 && (
+          {results && results.results && results.results.length > 0 && (
             <motion.div 
-              className="search-results"
+              className="mapping-results"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <h3>Results for "{searchTerm}"</h3>
-              <div className="unified-results">
-                <motion.div className="results-grid">
-                  {results.map((item, index) => (
-                    <SystemCard 
-                      key={index} 
-                      item={item} 
-                      system="Common"
-                    />
-                  ))}
-                </motion.div>
+              <div className="results-header">
+                <h3>Mapping Results for "{searchTerm}" in {selectedSystem.charAt(0).toUpperCase() + selectedSystem.slice(1)}</h3>
+                {results.pagination && (
+                  <div className="pagination-info">
+                    Page {results.pagination.page} of {results.pagination.total_pages} • 
+                    {results.pagination.total_results} total results
+                  </div>
+                )}
               </div>
+              
+              <div className="mapping-table-container">
+                <table className="mapping-table">
+                  <thead>
+                    <tr>
+                      <th>Source System</th>
+                      <th>Ayurveda</th>
+                      <th>Siddha</th>
+                      <th>Unani</th>
+                      <th>ICD-11</th>
+                      <th>Confidence</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.results.map((mapping, index) => (
+                      <motion.tr 
+                        key={mapping.mapping_id || index}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="mapping-row"
+                      >
+                        <td>
+                          <div className="source-term">
+                            <div className="term-code">{mapping.source_term.code}</div>
+                            <div className="term-name">{mapping.source_term.english_name}</div>
+                          </div>
+                        </td>
+                        <td>
+                          {mapping.namaste_terms.ayurveda ? (
+                            <div className="system-term">
+                              <div className="term-code">{mapping.namaste_terms.ayurveda.code}</div>
+                              <div className="term-name">{mapping.namaste_terms.ayurveda.english_name}</div>
+                            </div>
+                          ) : (
+                            <span className="no-data">-</span>
+                          )}
+                        </td>
+                        <td>
+                          {mapping.namaste_terms.siddha ? (
+                            <div className="system-term">
+                              <div className="term-code">{mapping.namaste_terms.siddha.code}</div>
+                              <div className="term-name">{mapping.namaste_terms.siddha.english_name}</div>
+                            </div>
+                          ) : (
+                            <span className="no-data">-</span>
+                          )}
+                        </td>
+                        <td>
+                          {mapping.namaste_terms.unani ? (
+                            <div className="system-term">
+                              <div className="term-code">{mapping.namaste_terms.unani.code}</div>
+                              <div className="term-name">{mapping.namaste_terms.unani.english_name}</div>
+                            </div>
+                          ) : (
+                            <span className="no-data">-</span>
+                          )}
+                        </td>
+                        <td>
+                          {mapping.icd_mapping ? (
+                            <div className="system-term">
+                              <div className="term-code">{mapping.icd_mapping.code}</div>
+                              <div className="term-name">{mapping.icd_mapping.title}</div>
+                            </div>
+                          ) : (
+                            <span className="no-data">-</span>
+                          )}
+                        </td>
+                        <td>
+                          <div className="confidence-score">
+                            <div className="score-value">{(mapping.confidence_score * 100).toFixed(1)}%</div>
+                            <div className="score-bar">
+                              <div 
+                                className="score-fill"
+                                style={{ width: `${mapping.confidence_score * 100}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <Link 
+                            to="/mapping-details" 
+                            state={{ mapping }}
+                            className="view-button"
+                          >
+                            View Details
+                          </Link>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {results.pagination && (
+                <div className="pagination-controls">
+                  <button 
+                    disabled={!results.pagination.has_previous}
+                    className="pagination-btn"
+                  >
+                    Previous
+                  </button>
+                  <span>Page {results.pagination.page} of {results.pagination.total_pages}</span>
+                  <button 
+                    disabled={!results.pagination.has_next}
+                    className="pagination-btn"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -1906,7 +2053,7 @@ const SearchPage = () => {
   );
 };
 
-// System Page Component (unchanged)
+// System Page Component
 const SystemPage = ({ systemName }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState(null);
@@ -2096,7 +2243,7 @@ const SystemPage = ({ systemName }) => {
   );
 };
 
-// Details Page Component (unchanged)
+// Details Page Component
 const DetailsPage = () => {
   const location = useLocation();
   const { item, system } = location.state || {};
@@ -2270,7 +2417,239 @@ const DetailsPage = () => {
   );
 };
 
-// Footer Component (unchanged)
+// Mapping Details Page Component (new)
+const MappingDetailsPage = () => {
+  const location = useLocation();
+  const { mapping } = location.state || {};
+  
+  if (!mapping) {
+    return (
+      <div className="mapping-details-page">
+        <div className="container">
+          <div className="error-message">
+            <h2>No Mapping Details Available</h2>
+            <p>Please go back and select a mapping to view details.</p>
+            <Link to="/search" className="back-button">Back to Search</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mapping-details-page">
+      <div className="container">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Link to={-1} className="back-button">← Back to Results</Link>
+          
+          <div className="details-header">
+            <h2>{mapping.source_term.english_name}</h2>
+            <div className="badges">
+              <span className="system-badge">{mapping.search_system}</span>
+              <span className="code-badge">{mapping.source_term.code}</span>
+              <span className="confidence-badge">
+                Confidence: {(mapping.confidence_score * 100).toFixed(1)}%
+              </span>
+            </div>
+          </div>
+          
+          <div className="mapping-details-content">
+            <div className="details-section">
+              <h3>Source Term Information</h3>
+              <div className="details-grid">
+                <div className="detail-item">
+                  <span className="detail-label">System:</span>
+                  <span className="detail-value">{mapping.search_system}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Code:</span>
+                  <span className="detail-value">{mapping.source_term.code}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">English Name:</span>
+                  <span className="detail-value">{mapping.source_term.english_name}</span>
+                </div>
+                {mapping.source_term.hindi_name && (
+                  <div className="detail-item">
+                    <span className="detail-label">Hindi Name:</span>
+                    <span className="detail-value">{mapping.source_term.hindi_name}</span>
+                  </div>
+                )}
+                {mapping.source_term.diacritical_name && (
+                  <div className="detail-item">
+                    <span className="detail-label">Diacritical Name:</span>
+                    <span className="detail-value">{mapping.source_term.diacritical_name}</span>
+                  </div>
+                )}
+                {mapping.source_term.description && mapping.source_term.description !== '-' && (
+                  <div className="detail-item full-width">
+                    <span className="detail-label">Description:</span>
+                    <span className="detail-value">{mapping.source_term.description}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="details-section">
+              <h3>NAMASTE Terms Mapping</h3>
+              <div className="mapping-cards">
+                {mapping.namaste_terms.ayurveda && (
+                  <div className="mapping-card">
+                    <h4>Ayurveda</h4>
+                    <div className="mapping-details">
+                      <div className="detail-item">
+                        <span className="detail-label">Code:</span>
+                        <span className="detail-value">{mapping.namaste_terms.ayurveda.code}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">English Name:</span>
+                        <span className="detail-value">{mapping.namaste_terms.ayurveda.english_name}</span>
+                      </div>
+                      {mapping.namaste_terms.ayurveda.hindi_name && (
+                        <div className="detail-item">
+                          <span className="detail-label">Hindi Name:</span>
+                          <span className="detail-value">{mapping.namaste_terms.ayurveda.hindi_name}</span>
+                        </div>
+                      )}
+                      {mapping.namaste_terms.ayurveda.diacritical_name && (
+                        <div className="detail-item">
+                          <span className="detail-label">Diacritical Name:</span>
+                          <span className="detail-value">{mapping.namaste_terms.ayurveda.diacritical_name}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {mapping.namaste_terms.siddha && (
+                  <div className="mapping-card">
+                    <h4>Siddha</h4>
+                    <div className="mapping-details">
+                      <div className="detail-item">
+                        <span className="detail-label">Code:</span>
+                        <span className="detail-value">{mapping.namaste_terms.siddha.code}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">English Name:</span>
+                        <span className="detail-value">{mapping.namaste_terms.siddha.english_name}</span>
+                      </div>
+                      {mapping.namaste_terms.siddha.tamil_name && (
+                        <div className="detail-item">
+                          <span className="detail-label">Tamil Name:</span>
+                          <span className="detail-value">{mapping.namaste_terms.siddha.tamil_name}</span>
+                        </div>
+                      )}
+                      {mapping.namaste_terms.siddha.romanized_name && (
+                        <div className="detail-item">
+                          <span className="detail-label">Romanized Name:</span>
+                          <span className="detail-value">{mapping.namaste_terms.siddha.romanized_name}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {mapping.namaste_terms.unani && (
+                  <div className="mapping-card">
+                    <h4>Unani</h4>
+                    <div className="mapping-details">
+                      <div className="detail-item">
+                        <span className="detail-label">Code:</span>
+                        <span className="detail-value">{mapping.namaste_terms.unani.code}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-label">English Name:</span>
+                        <span className="detail-value">{mapping.namaste_terms.unani.english_name}</span>
+                      </div>
+                      {mapping.namaste_terms.unani.arabic_name && (
+                        <div className="detail-item">
+                          <span className="detail-label">Arabic Name:</span>
+                          <span className="detail-value">{mapping.namaste_terms.unani.arabic_name}</span>
+                        </div>
+                      )}
+                      {mapping.namaste_terms.unani.romanized_name && (
+                        <div className="detail-item">
+                          <span className="detail-label">Romanized Name:</span>
+                          <span className="detail-value">{mapping.namaste_terms.unani.romanized_name}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {mapping.icd_mapping && (
+              <div className="details-section">
+                <h3>ICD-11 Mapping</h3>
+                <div className="details-grid">
+                  <div className="detail-item">
+                    <span className="detail-label">Code:</span>
+                    <span className="detail-value">{mapping.icd_mapping.code}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Title:</span>
+                    <span className="detail-value">{mapping.icd_mapping.title}</span>
+                  </div>
+                  {mapping.icd_mapping.foundation_uri && (
+                    <div className="detail-item">
+                      <span className="detail-label">Foundation URI:</span>
+                      <span className="detail-value">
+                        <a href={mapping.icd_mapping.foundation_uri} target="_blank" rel="noopener noreferrer">
+                          {mapping.icd_mapping.foundation_uri}
+                        </a>
+                      </span>
+                    </div>
+                  )}
+                  {mapping.icd_mapping.chapter_no && (
+                    <div className="detail-item">
+                      <span className="detail-label">Chapter Number:</span>
+                      <span className="detail-value">{mapping.icd_mapping.chapter_no}</span>
+                    </div>
+                  )}
+                  <div className="detail-item">
+                    <span className="detail-label">Similarity Score:</span>
+                    <span className="detail-value">{(mapping.icd_mapping.similarity_score * 100).toFixed(1)}%</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div className="details-section">
+              <h3>Additional Information</h3>
+              <div className="details-grid">
+                <div className="detail-item">
+                  <span className="detail-label">Mapping ID:</span>
+                  <span className="detail-value">{mapping.mapping_id}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Fuzzy Similarity:</span>
+                  <span className="detail-value">{(mapping.fuzzy_similarity * 100).toFixed(1)}%</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Confidence Score:</span>
+                  <span className="detail-value">{(mapping.confidence_score * 100).toFixed(1)}%</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Created At:</span>
+                  <span className="detail-value">
+                    {new Date(mapping.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+// Footer Component
 const Footer = () => {
   return (
     <motion.footer 
@@ -2431,6 +2810,7 @@ function App() {
             <Route path="/unani" element={<SystemPage systemName="unani" />} />
             <Route path="/icd11" element={<SystemPage systemName="icd11" />} />
             <Route path="/details" element={<DetailsPage />} />
+            <Route path="/mapping-details" element={<MappingDetailsPage />} />
             <Route path="/profile" element={<ProfilePage user={user} />} />
             <Route path="/add-patient" element={<PatientForm />} />
             <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
@@ -2451,4 +2831,3 @@ function App() {
 }
 
 export default App;
-
