@@ -2010,3 +2010,64 @@ body {
     grid-template-columns: 1fr;
   }
 }
+/* Medical Report Section Styles */
+.medical-report-section {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.medical-report-section h3 {
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+  font-size: 1.25rem;
+}
+
+.report-content {
+  position: relative;
+}
+
+.report-content p {
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.report-content p.collapsed {
+  max-height: 6rem;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+}
+
+.report-content p.expanded {
+  max-height: none;
+}
+
+.read-more-btn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+  display: inline-block;
+}
+
+.read-more-btn:hover {
+  text-decoration: underline;
+}
+
+/* Responsive adjustments for medical report */
+@media (max-width: 768px) {
+  .medical-report-section {
+    padding: 1rem;
+    margin: 1.5rem 0;
+  }
+  
+  .medical-report-section h3 {
+    font-size: 1.1rem;
+  }
+}

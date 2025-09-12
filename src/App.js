@@ -1745,11 +1745,14 @@ const SystemCard = ({ item, system }) => {
 };
 
 // Search Page Component (updated for mappings)
+// Search Page Component (updated with medical report)
 const SearchPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSystem, setSelectedSystem] = useState('ayurveda');
   const [minConfidence, setMinConfidence] = useState(0.1);
   const [results, setResults] = useState(null);
+  const [medicalReport, setMedicalReport] = useState(null);
+  const [isReportExpanded, setIsReportExpanded] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
   const handleSearch = async (e) => {
@@ -1757,18 +1760,27 @@ const SearchPage = () => {
     if (!searchTerm.trim()) return;
     
     setIsSearching(true);
+    setMedicalReport(null);
     
     try {
       // Call the mappings endpoint
-      const data = await fetchData(
+      const mappingData = await fetchData(
         `${API_BASE_URL}/terminologies/mappings/?system=${selectedSystem}&q=${searchTerm}&min_confidence=${minConfidence}`
       );
       
-      if (data && data.results) {
-        setResults(data);
-        console.log("API Response:", data);
+      // Call the medical report endpoint
+      const reportData = await fetchData(
+        `https://b801a520e91d.ngrok-free.app/process?text=${searchTerm}`
+      );
+      
+      if (mappingData && mappingData.results) {
+        setResults(mappingData);
       } else {
         setResults({ results: [] });
+      }
+      
+      if (reportData && reportData.result) {
+        setMedicalReport(reportData.result);
       }
     } catch (error) {
       console.error("Search error:", error);
@@ -1776,6 +1788,16 @@ const SearchPage = () => {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  // Function to truncate the medical report to 4 lines
+  const truncateReport = (text) => {
+    if (!text) return '';
+    
+    const lines = text.split('\n');
+    if (lines.length <= 4) return text;
+    
+    return lines.slice(0, 4).join('\n') + '...';
   };
 
   return (
@@ -1850,6 +1872,33 @@ const SearchPage = () => {
             )}
           </motion.button>
         </motion.form>
+
+        {/* Medical Report Section */}
+        <AnimatePresence>
+          {medicalReport && (
+            <motion.div 
+              className="medical-report-section"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <h3>Medical Report for "{searchTerm}"</h3>
+              <div className="report-content">
+                <p className={isReportExpanded ? "expanded" : "collapsed"}>
+                  {isReportExpanded ? medicalReport : truncateReport(medicalReport)}
+                </p>
+                {medicalReport.split('\n').length > 4 && (
+                  <button 
+                    className="read-more-btn"
+                    onClick={() => setIsReportExpanded(!isReportExpanded)}
+                  >
+                    {isReportExpanded ? 'Read less' : 'Read more'}
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence>
           {results && results.results && results.results.length === 0 && (
